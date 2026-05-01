@@ -4,7 +4,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static('public'));
 
 const IDATARIVER_API_KEY = process.env.IDATARIVER_API_KEY;
 const IDATARIVER_PRODUCT_ID = process.env.IDATARIVER_PRODUCT_ID;
