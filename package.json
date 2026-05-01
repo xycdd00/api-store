@@ -1,0 +1,13 @@
+{
+  "name": "api-store",
+  "version": "1.0.0",
+  "description": "API令牌自动售卖系统",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "axios": "^1.6.0"
+  }
+}

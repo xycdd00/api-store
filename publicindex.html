@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API令牌商店</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .container { background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); padding: 40px; max-width: 600px; width: 100%; }
+        h1 { text-align: center; color: #1a1a1a; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
+        .section { margin-bottom: 30px; }
+        .section-title { font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; }
+        .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .plan-card { border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; background: #fafafa; }
+        .plan-card:hover { border-color: #007bff; background: #f0f7ff; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,123,255,0.1); }
+        .plan-card.selected { border-color: #007bff; background: #e6f2ff; }
+        .plan-name { font-weight: 600; color: #333; margin-bottom: 8px; }
+        .plan-quota { font-size: 24px; color: #007bff; font-weight: bold; margin-bottom: 8px; }
+        .plan-price { font-size: 20px; color: #ff6b00; font-weight: bold; }
+        .plan-desc { font-size: 12px; color: #666; margin-top: 5px; }
+        .redeem-box { display: flex; gap: 12px; margin-top: 20px; }
+        input { flex: 1; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; outline: none; transition: border 0.2s; }
+        input:focus { border-color: #007bff; }
+        .btn { flex: 1; padding: 14px 24px; background: #007bff; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn:hover { background: #0056b3; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-buy { background: #28a745; }
+        .btn-buy:hover { background: #1e7e34; }
+        .result-box { margin-top: 20px; padding: 20px; border-radius: 10px; display: none; word-break: break-all; }
+        .result-box.success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .result-box.error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .result-box .label { font-weight: 600; margin-bottom: 8px; }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #007bff; animation: spin 1s linear infinite; margin-right: 8px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 API令牌商店</h1>
+        <p class="subtitle">选择套餐购买，或输入已有授权码兑换令牌</p>
+
+        <!-- 套餐选择区（仅作展示，实际支付会跳转你的iDataRiver页面） -->
+        <div class="section">
+            <div class="section-title">📦 选择套餐</div>
+            <div class="plans">
+                <div class="plan-card" onclick="selectPlan('starter')">
+                    <div class="plan-name">⚡ 开发者入门</div>
+                    <div class="plan-quota">750万 Token</div>
+                    <div class="plan-price">¥10</div>
+                    <div class="plan-desc">适合个人开发者日常使用</div>
+                </div>
+                <div class="plan-card" onclick="selectPlan('pro')">
+                    <div class="plan-name">🔥 专家进阶</div>
+                    <div class="plan-quota">2000万 Token</div>
+                    <div class="plan-price">¥25</div>
+                    <div class="plan-desc">适合高强度开发与测试</div>
+                </div>
+                <div class="plan-card" onclick="selectPlan('family')">
+                    <div class="plan-name">🎒 AI全家桶</div>
+                    <div class="plan-quota">500万 Token</div>
+                    <div class="plan-price">¥8</div>
+                    <div class="plan-desc">多模型混合体验包</div>
+                </div>
+            </div>
+            <button class="btn btn-buy" onclick="buyPlan()" style="margin-top: 20px; width: 100%;">💳 立即购买选中套餐</button>
+        </div>
+
+        <!-- 授权码兑换区 -->
+        <div class="section">
+            <div class="section-title">🔑 兑换授权码</div>
+            <p style="color: #666; font-size: 14px; margin-bottom: 15px;">购买后拿到的授权码，在这里兑换你的API令牌</p>
+            <div class="redeem-box">
+                <input type="text" id="licenseKey" placeholder="输入16位授权码，如 ZFUXC4F8OOCI">
+                <button class="btn" onclick="redeemKey()">立即兑换</button>
+            </div>
+        </div>
+
+        <!-- 结果展示区 -->
+        <div id="resultBox" class="result-box"></div>
+    </div>
+
+    <script>
+        let selectedPlan = null;
+
+        function selectPlan(planId) {
+            selectedPlan = planId;
+            document.querySelectorAll('.plan-card').forEach(card => card.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+
+        function buyPlan() {
+            if (!selectedPlan) {
+                alert('请先选择一个套餐');
+                return;
+            }
+            // 这里最终会替换为你iDataRiver的支付链接
+            const planUrls = {
+                starter: 'https://buy.idatariver.com/你的商品链接?plan=starter',
+                pro: 'https://buy.idatariver.com/你的商品链接?plan=pro',
+                family: 'https://buy.idatariver.com/你的商品链接?plan=family',
+            };
+            alert('模拟购买：即将跳转到支付页面\n（实际部署时，此链接会指向你的iDataRiver商品支付页）');
+            // window.location.href = planUrls[selectedPlan];  // 实际部署时取消注释
+        }
+
+        async function redeemKey() {
+            const licenseKey = document.getElementById('licenseKey').value.trim();
+            const resultBox = document.getElementById('resultBox');
+            
+            if (!licenseKey) { alert('请输入授权码'); return; }
+
+            resultBox.style.display = 'block';
+            resultBox.className = 'result-box';
+            resultBox.innerHTML = '<span class="loading"></span> 正在验证并生成令牌...';
+
+            try {
+                const response = await fetch('/redeem', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ licenseKey })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultBox.className = 'result-box success';
+                    resultBox.innerHTML = `
+                        <div class="label">✅ 兑换成功！</div>
+                        <p><strong>你的API令牌：</strong><br><span style="color:#007bff; font-size:18px;">${data.apiKey}</span></p>
+                        <p style="margin-top:10px; color:#155724; font-weight:600;">⚡ 请立刻复制并妥善保管，此令牌仅显示一次！</p>
+                    `;
+                } else {
+                    resultBox.className = 'result-box error';
+                    resultBox.innerHTML = `<div class="label">❌ 兑换失败</div><p>${data.message}</p>`;
+                }
+            } catch (error) {
+                resultBox.className = 'result-box error';
+                resultBox.innerHTML = '<div class="label">❌ 网络错误</div><p>请检查网络连接后重试</p>';
+            }
+        }
+    </script>
+</body>
+</html>
