@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="pageTitle">API Guide - API Token Shop</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; line-height: 1.6; }
+        .container { max-width: 800px; margin: 40px auto; background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); padding: 40px; }
+        .lang-switch { text-align: right; margin-bottom: 20px; }
+        .lang-switch button { margin: 0 5px; padding: 6px 12px; border: 1px solid #ccc; background: white; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .lang-switch button.active { background: #007bff; color: white; border-color: #007bff; }
+        h1 { font-size: 28px; margin-bottom: 10px; color: #1a1a1a; }
+        h2 { font-size: 22px; margin: 30px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #e0e0e0; }
+        h3 { font-size: 18px; margin: 20px 0 10px; }
+        p { margin-bottom: 15px; }
+        code { background: #e8f0fe; padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 14px; }
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 12px; overflow-x: auto; margin: 15px 0; }
+        pre code { background: none; padding: 0; color: inherit; }
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #f0f7ff; text-align: left; padding: 10px 12px; font-weight: 600; font-size: 14px; }
+        td { padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        tr:hover { background: #fafafa; }
+        .tip { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 6px; margin: 20px 0; }
+        .back-link { display: inline-block; margin-top: 30px; color: #007bff; text-decoration: none; font-weight: 600; }
+        .back-link:hover { text-decoration: underline; }
+        @media (max-width: 600px) {
+            .container { margin: 20px; padding: 20px; }
+            pre { padding: 15px; font-size: 12px; }
+        }
+    </style>
+    <script src="api-docs-i18n.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="lang-switch">
+            <button id="btnZh" onclick="switchDocLang('zh')">中文</button>
+            <button id="btnEn" onclick="switchDocLang('en')">English</button>
+        </div>
+
+        <h1 data-i18n="mainTitle">📖 API Guide</h1>
+
+        <h2 data-i18n="quickStartTitle">🚀 Quick Start</h2>
+
+        <h3 data-i18n="step1Title">1. Get Your API Token</h3>
+        <p data-i18n="step1Desc">Purchase a plan and redeem your license key on our website to get your unique <code>sk-</code> token.</p>
+
+        <h3 data-i18n="step2Title">2. Integrate in 3 Lines of Code</h3>
+        <p data-i18n="step2Desc">We are fully compatible with the OpenAI API format. Simply change the base URL and API key:</p>
+
+        <pre><code><span class="comment"># example.py</span>
+<span class="comment"># Install the OpenAI SDK first: pip install openai</span>
+
+<span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+
+<span class="comment"># Create a client pointing to our API endpoint</span>
+client = OpenAI(
+    base_url=<span class="string">"https://你的New-API域名"</span>,
+    api_key=<span class="string">"sk-你的令牌"</span>
+)
+
+<span class="comment"># Send a chat completion request</span>
+response = client.chat.completions.create(
+    model=<span class="string">"模型名称"</span>,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"你好"</span>}]
+)
+
+<span class="comment"># Print the model's reply</span>
+<span class="function">print</span>(response.choices[<span class="number">0</span>].message.content)</code></pre>
+
+        <h2 data-i18n="modelsTitle">🤖 Available Models</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th data-i18n="tableHeaderModel">Model Name</th>
+                    <th data-i18n="tableHeaderUseCase">Use Case</th>
+                    <th data-i18n="tableHeaderContext">Context</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code data-i18n="model1Name">gpt-5.4</code></td>
+                    <td data-i18n="model1UseCase">Reasoning, complex tasks</td>
+                    <td>128K</td>
+                </tr>
+                <tr>
+                    <td><code data-i18n="model2Name">claude-opus-4-7</code></td>
+                    <td data-i18n="model2UseCase">Coding, deep analysis</td>
+                    <td>200K</td>
+                </tr>
+                <tr>
+                    <td><code data-i18n="model3Name">deepseek-v4</code></td>
+                    <td data-i18n="model3UseCase">Cost-effective coding & chat</td>
+                    <td>128K</td>
+                </tr>
+                <tr>
+                    <td><code data-i18n="model4Name">qwen-3.6-plus</code></td>
+                    <td data-i18n="model4UseCase">General purpose, great value</td>
+                    <td>128K</td>
+                </tr>
+                <tr>
+                    <td><code data-i18n="model5Name">kimi-k2.6</code></td>
+                    <td data-i18n="model5UseCase">Super-long text processing</td>
+                    <td>1M</td>
+                </tr>
+                <tr>
+                    <td><code data-i18n="model6Name">glm-5.1</code></td>
+                    <td data-i18n="model6UseCase">Chinese understanding, general</td>
+                    <td>128K</td>
+                </tr>
+                <tr>
+                    <td><code data-i18n="model7Name">minimax-m2.7</code></td>
+                    <td data-i18n="model7UseCase">Multilingual, creative writing</td>
+                    <td>128K</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2 data-i18n="errorsTitle">⚠️ Error Codes</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th data-i18n="tableHeaderCode">Code</th>
+                    <th data-i18n="tableHeaderMeaning">Meaning</th>
+                    <th data-i18n="tableHeaderSolution">Solution</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong data-i18n="err1Code">401</strong></td>
+                    <td data-i18n="err1Meaning">Invalid or expired token</td>
+                    <td data-i18n="err1Solution">Check your token, or quota balance</td>
+                </tr>
+                <tr>
+                    <td><strong data-i18n="err2Code">429</strong></td>
+                    <td data-i18n="err2Meaning">Rate limit exceeded</td>
+                    <td data-i18n="err2Solution">Slow down requests or upgrade plan</td>
+                </tr>
+                <tr>
+                    <td><strong data-i18n="err3Code">500</strong></td>
+                    <td data-i18n="err3Meaning">Internal server error</td>
+                    <td data-i18n="err3Solution">Retry later or contact support</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2 data-i18n="contactTitle">📬 Contact & Support</h2>
+        <p data-i18n="contactDesc">Website: <a href="/">Your Website</a></p>
+
+        <div class="tip">
+            <p data-i18n="tipText">💡 Your token quota is universal — use it across all models without buying separate plans.</p>
+        </div>
+
+        <a href="/" class="back-link" data-i18n="backHome">⬅ Back to Shop</a>
+    </div>
+
+    <script>
+        let docLang = localStorage.getItem('docLang') || 'zh';
+
+        function applyDocLang(lang) {
+            if (!docTranslations[lang]) return;
+            docLang = lang;
+            localStorage.setItem('docLang', lang);
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (docTranslations[lang][key]) {
+                    el.innerHTML = docTranslations[lang][key];
+                }
+            });
+
+            document.getElementById('btnZh').classList.toggle('active', lang === 'zh');
+            document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+        }
+
+        function switchDocLang(lang) {
+            applyDocLang(lang);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            applyDocLang(docLang);
+        });
+    </script>
+</body>
+</html>
