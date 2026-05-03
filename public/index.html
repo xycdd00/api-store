@@ -129,15 +129,21 @@
         }
 
         function buyPlan() {
-            if (!selectedPlan) {
-                alert(translations[currentLang]?.alertSelectPlan || '请先选择一个套餐');
-                return;
-            }
-            const planUrls = {
-                starter: 'https://buy.idatariver.com/你的商品链接?plan=starter',
-                pro: 'https://buy.idatariver.com/你的商品链接?plan=pro',
-                family: 'https://buy.idatariver.com/你的商品链接?plan=family',
-            };
+    if (!selectedPlan) {
+        alert(translations[currentLang]?.alertSelectPlan || '请先选择一个套餐');
+        return;
+    }
+
+    // 根据当前语言，跳转到对应的商品支付页
+    let paymentUrl;
+    if (currentLang === 'en') {
+        paymentUrl = 'https://buy.idatariver.com/https://www.idatariver.com/zh-cn/project/one-key.-all-models.-zero-hassle.-c41a'; // 替换为英文商品链接
+    } else {
+        paymentUrl = 'https://buy.idatariver.com/https://www.idatariver.com/zh-cn/project/%E8%BF%9E%E6%8E%A5%E5%85%A8%E7%90%83%E9%A1%B6%E7%BA%A7-ai-%E6%A8%A1%E5%9E%8B-8495'; // 替换为中文商品链接
+    }
+
+    window.location.href = paymentUrl;
+}
             alert(translations[currentLang]?.alertSimulateBuy || '模拟购买：即将跳转到支付页面');
         }
 
