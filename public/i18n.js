@@ -29,7 +29,7 @@ const translations = {
     labelApiKey: "Your API Token:",
     resultSuccessMsg: "⚡ Please copy and save it immediately. This token is only shown once!",
     resultErrorTitle: "❌ Redemption Failed",
-    resultNetworkError: "Network error. Please check your connection and try again."
+    resultNetworkError: "Network error. Please check your connection and try again."，
     brandTitle: "🚀 API Token Shop",
     brandSubtitle: "One-stop AI Model API Hub | One Key, All Models. Zero Hassle.",
     featureOneTitle: "One Key for All",
@@ -71,7 +71,7 @@ const translations = {
     labelApiKey: "你的API令牌：",
     resultSuccessMsg: "⚡ 请立刻复制并妥善保管，此令牌仅显示一次！",
     resultErrorTitle: "❌ 兑换失败",
-    resultNetworkError: "网络错误，请检查网络连接后重试"
+    resultNetworkError: "网络错误，请检查网络连接后重试"，
     brandTitle: "🚀 API令牌商店",
     brandSubtitle: "一站式AI模型API聚合平台 | 一个Key，畅享全球顶级模型",
     featureOneTitle: "一个Key通用",
