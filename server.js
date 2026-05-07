@@ -21,9 +21,14 @@ app.post('/redeem', async (req, res) => {
 
     try {
         // 1. 验证授权码
-        const verifyRes = await axios.get('https://api.idatariver.com/mapi/license/query', {
-            params: { code: licenseKey, product_id: IDATARIVER_PRODUCT_ID, secret: IDATARIVER_API_KEY }
-        });
+        cconst verifyRes = await axios.get('https://api.idatariver.com/mapi/license/query', {
+    params: { code: licenseKey, product_id: IDATARIVER_PRODUCT_ID, secret: IDATARIVER_API_KEY }
+});
+
+// *** 调试模式：直接把 iDataRiver 返回的数据显示在网页上 ***
+return res.json({ success: false, message: '调试数据: ' + JSON.stringify(verifyRes.data) });
+
+// const item = verifyRes.data.result?.items?.[0];  // 这一行和后面验证逻辑先临时注释掉
         const item = verifyRes.data.result?.items?.[0];
         if (!item || item.status !== 'VALID') {
             return res.status(400).json({ success: false, message: '授权码无效或已被使用' });
