@@ -53,7 +53,24 @@ return res.json({ success: false, message: '调试数据: ' + JSON.stringify(ver
             }
         });
 
-        const newToken = tokenRes.data.data?.key || tokenRes.data.key;
+        // 更稳健地从 New-API 响应中提取令牌
+let newToken = null;
+const responseData = tokenRes.data;
+
+// 尝试多种可能的返回路径
+if (responseData.data && responseData.data.key) {
+    newToken = responseData.data.key;
+} else if (responseData.key) {
+    newToken = responseData.key;
+} else if (responseData.data && responseData.data.data && responseData.data.data.key) {
+    newToken = responseData.data.data.key;
+}
+
+// 如果还是提取不到，把完整响应打印出来调试
+if (!newToken) {
+    console.error('解析令牌失败，完整响应:', JSON.stringify(responseData));
+    return res.status(500).json({ success: false, message: '令牌创建失败，请联系管理员' });
+}
         if (!newToken) return res.status(500).json({ success: false, message: '令牌生成失败' });
 
         // 4. 激活授权码
