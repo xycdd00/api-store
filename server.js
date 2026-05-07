@@ -39,37 +39,64 @@ app.post('/redeem', async (req, res) => {
         let quota = 1000000;
         try { if (item.states) quota = JSON.parse(item.states).quota || quota; } catch (e) {}
 
-        // 3. 调用 New-API 创建令牌
-        console.log('正在生成API令牌...');
-        const tokenRes = await axios.post(`${NEWAPI_BASE_URL}/api/token/`, {
-            name: `购买-${licenseKey.substring(0, 8)}`,
-            remain_quota: quota,
-            unlimited_quota: false
-        }, {
+      // 3. 调用 New-API 创建令牌（尝试管理员端点）
+console.log('正在通过管理员接口生成API令牌...');
+let tokenRes;
+try {
+    // 首先尝试管理员专用路径
+    tokenRes = await axios.post(`${NEWAPI_BASE_URL}/api/admin/token`, { // 注意这里是 /api/admin/token
+        name: `购买-${licenseKey.substring(0, 8)}`,
+        remain_quota: quota,
+        unlimited_quota: false
+    }, {
+        headers: {
+            'Authorization': `Bearer ${NEWAPI_ADMIN_KEY}`,
+            'Content-Type': 'application/json'
+        }
+    });
+    console.log('管理员接口响应:', JSON.stringify(tokenRes.data));
+} catch (adminErr) {
+    console.error('管理员接口失败，回退到普通接口...');
+    // 如果管理员接口不通，则回退到我们之前用的接口
+    tokenRes = await axios.post(`${NEWAPI_BASE_URL}/api/token/`, {
+        name: `购买-${licenseKey.substring(0, 8)}`,
+        remain_quota: quota,
+        unlimited_quota: false
+    }, {
+        headers: {
+            'Authorization': `Bearer ${NEWAPI_ADMIN_KEY}`,
+            'Content-Type': 'application/json',
+            'New-Api-User': NEWAPI_USER_ID
+        }
+    });
+}
+
+// 4. 解析令牌，如果还是没有key，则尝试查询令牌列表
+let newToken = tokenRes.data.data?.key || tokenRes.data.key;
+
+if (!newToken) {
+    console.log('创建响应中未找到key，尝试从令牌列表中查询最新令牌...');
+    try {
+        const listRes = await axios.get(`${NEWAPI_BASE_URL}/api/token/?order=created_at&desc=true&limit=1`, {
             headers: {
                 'Authorization': `Bearer ${NEWAPI_ADMIN_KEY}`,
-                'Content-Type': 'application/json',
                 'New-Api-User': NEWAPI_USER_ID
             }
         });
-
-        // 4. 解析令牌
-        let newToken = null;
-        const responseData = tokenRes.data;
-        if (responseData.data && responseData.data.key) {
-            newToken = responseData.data.key;
-        } else if (responseData.key) {
-            newToken = responseData.key;
-        } else if (responseData.data && responseData.data.data && responseData.data.data.key) {
-            newToken = responseData.data.data.key;
+        const tokens = listRes.data.data || listRes.data;
+        if (tokens && tokens.length > 0) {
+            newToken = tokens[0].key;
+            console.log('从令牌列表中找到令牌:', newToken.substring(0, 10) + '...');
         }
+    } catch (listErr) {
+        console.error('查询令牌列表失败:', listErr.response?.data || listErr.message);
+    }
+}
 
-        if (!newToken) {
-            console.error('解析令牌失败，完整响应:', JSON.stringify(responseData));
-            return res.status(500).json({ success: false, message: '令牌创建失败，请联系管理员' });
-        }
-
-        console.log(`API令牌生成成功: ${newToken.substring(0, 10)}...`);
+if (!newToken) {
+    console.error('解析令牌失败，所有方式均未获取到key');
+    return res.status(500).json({ success: false, message: '令牌创建失败，请联系管理员' });
+}
 
         // 5. 激活授权码 (使用标准 Bearer Token)
         try {
