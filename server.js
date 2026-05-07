@@ -1,6 +1,5 @@
 const express = require('express');
 const axios = require('axios');
-const app = express();
 const path = require('path');
 
 const app = express();
@@ -10,16 +9,16 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // ============ 环境变量配置 ============
-// 需要在 Zeabur 或 .env 中设置以下变量：
+// 需要在 Zeabur 中设置以下变量：
 
 // iDataRiver 配置
 const IDATARIVER_API_KEY = process.env.IDATARIVER_API_KEY;
 const IDATARIVER_PRODUCT_ID = process.env.IDATARIVER_PRODUCT_ID;
 
 // New API 配置
-const NEWAPI_BASE_URL = process.env.NEWAPI_BASE_URL;      // 如：https://xycdd001.zeabur.app
-const NEWAPI_ADMIN_KEY = process.env.NEWAPI_ADMIN_KEY;    // 管理员 Key
-const NEWAPI_USER_ID = process.env.NEWAPI_USER_ID;        // 用户 ID
+const NEWAPI_BASE_URL = process.env.NEWAPI_BASE_URL;
+const NEWAPI_ADMIN_KEY = process.env.NEWAPI_ADMIN_KEY;
+const NEWAPI_USER_ID = process.env.NEWAPI_USER_ID;
 
 // ======================================
 
@@ -37,7 +36,6 @@ app.get('/admin', (req, res) => {
 app.post('/redeem', async (req, res) => {
     const { licenseKey } = req.body;
     
-    // 1. 验证输入
     if (!licenseKey) {
         return res.status(400).json({ 
             success: false, 
@@ -45,7 +43,6 @@ app.post('/redeem', async (req, res) => {
         });
     }
     
-    // 2. 检查配置
     if (!IDATARIVER_API_KEY || !IDATARIVER_PRODUCT_ID || 
         !NEWAPI_BASE_URL || !NEWAPI_ADMIN_KEY) {
         return res.status(500).json({ 
@@ -55,7 +52,6 @@ app.post('/redeem', async (req, res) => {
     }
     
     try {
-        // ========== 3. 验证授权码 ==========
         console.log('验证授权码:', licenseKey);
         
         const verifyRes = await axios.get('https://api.idatariver.com/mapi/license/query', {
@@ -77,8 +73,7 @@ app.post('/redeem', async (req, res) => {
             });
         }
         
-        // ========== 4. 获取额度 ==========
-        let quota = 1000000;  // 默认 100 万额度
+        let quota = 1000000;
         try { 
             if (item.states) {
                 const states = JSON.parse(item.states);
@@ -89,8 +84,6 @@ app.post('/redeem', async (req, res) => {
         }
         
         console.log('用户额度:', quota);
-        
-        // ========== 5. 创建 New API Token ==========
         console.log('创建 Token...');
         
         const tokenRes = await axios.post(
@@ -111,7 +104,6 @@ app.post('/redeem', async (req, res) => {
         
         console.log('Token 创建响应:', JSON.stringify(tokenRes.data));
         
-        // 提取 Token
         let newToken = null;
         const responseData = tokenRes.data;
         
@@ -131,7 +123,6 @@ app.post('/redeem', async (req, res) => {
             });
         }
         
-        // ========== 6. 激活授权码 ==========
         console.log('激活授权码...');
         
         await axios.post('https://api.idatariver.com/mapi/license/activate', null, {
@@ -144,7 +135,6 @@ app.post('/redeem', async (req, res) => {
         
         console.log('兑换成功！');
         
-        // ========== 7. 返回结果 ==========
         res.json({ 
             success: true, 
             message: '兑换成功！', 
@@ -175,3 +165,4 @@ app.listen(port, () => {
     console.log(`🎁 兑换系统运行在 http://localhost:${port}`);
     console.log(`管理员后台：http://localhost:${port}/admin`);
 });
+
