@@ -3,205 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Token 兑换中心</title>
+    <title data-i18n="pageTitle">API Token Shop</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            width: 100%;
-            max-width: 500px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        .icon { font-size: 60px; text-align: center; margin-bottom: 20px; }
-        h1 { text-align: center; color: #333; margin-bottom: 10px; }
-        .subtitle { text-align: center; color: #888; margin-bottom: 30px; }
-        .input-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
-        input {
-            width: 100%;
-            padding: 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            text-align: center;
-            letter-spacing: 3px;
-        }
-        input:focus { outline: none; border-color: #667eea; }
-        button {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        button:hover { opacity: 0.9; transform: translateY(-2px); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        
-        .result {
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 10px;
-            display: none;
-        }
-        .result.success { background: #d4edda; display: block; }
-        .result.error { background: #f8d7da; color: #721c24; display: block; }
-        
-        .api-key-box {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            word-break: break-all;
-            font-size: 13px;
-            margin-top: 10px;
-        }
-        .copy-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-            width: 100%;
-        }
-        
-        .instructions {
-            background: #fff3cd;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-            font-size: 13px;
-            color: #856404;
-        }
-        .instructions code {
-            background: #ffeeba;
-            padding: 2px 6px;
-            border-radius: 4px;
-            display: block;
-            margin: 5px 0;
-            word-break: break-all;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 30px;
-            display: none;
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .container { background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); padding: 40px; max-width: 600px; width: 100%; }
+        h1 { text-align: center; color: #1a1a1a; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
+        .lang-switch { text-align: center; margin-bottom: 20px; }
+        .lang-switch button { margin: 0 5px; padding: 6px 12px; border: 1px solid #ccc; background: white; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .lang-switch button.active { background: #007bff; color: white; border-color: #007bff; }
+        .section { margin-bottom: 30px; }
+        .section-title { font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; }
+        .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .plan-card { border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; background: #fafafa; }
+        .plan-card:hover { border-color: #007bff; background: #f0f7ff; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,123,255,0.1); }
+        .plan-card.selected { border-color: #007bff; background: #e6f2ff; }
+        .plan-name { font-weight: 600; color: #333; margin-bottom: 8px; }
+        .plan-quota { font-size: 24px; color: #007bff; font-weight: bold; margin-bottom: 8px; }
+        .plan-price { font-size: 20px; color: #ff6b00; font-weight: bold; }
+        .plan-desc { font-size: 12px; color: #666; margin-top: 5px; }
+        .redeem-box { display: flex; gap: 12px; margin-top: 20px; }
+        input { flex: 1; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; outline: none; transition: border 0.2s; }
+        input:focus { border-color: #007bff; }
+        .btn { flex: 1; padding: 14px 24px; background: #007bff; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn:hover { background: #0056b3; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-buy { background: #28a745; }
+        .btn-buy:hover { background: #1e7e34; }
+        .result-box { margin-top: 20px; padding: 20px; border-radius: 10px; display: none; word-break: break-all; }
+        .result-box.success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .result-box.error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .result-box .label { font-weight: 600; margin-bottom: 8px; }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #007bff; animation: spin 1s linear infinite; margin-right: 8px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .admin-link { text-align: center; margin-top: 20px; }
-        .admin-link a { color: #667eea; text-decoration: none; }
     </style>
+    <script src="i18n.js"></script>
 </head>
 <body>
     <div class="container">
-        <div class="icon">🎁</div>
-        <h1>Token 兑换中心</h1>
-        <p class="subtitle">输入授权码即可兑换 API Key</p>
-        
-        <div class="input-group">
-            <label>授权码</label>
-            <input type="text" id="licenseKey" placeholder="请输入授权码">
+        <div class="brand-intro" style="text-align: center; margin-bottom: 30px;">
+            <h1 data-i18n="brandTitle">🚀 API令牌商店</h1>
+            <p class="subtitle" data-i18n="brandSubtitle">一站式AI模型API聚合平台 | 一个Key，畅享全球顶级模型</p>
+            <div style="display: flex; justify-content: center; gap: 20px; margin: 25px 0; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 120px; max-width: 150px; text-align: center;">
+                    <div style="font-size: 28px; margin-bottom: 8px;">🔑</div>
+                    <div style="font-weight: 600; font-size: 14px; color: #333;" data-i18n="featureOneTitle">一个Key通用</div>
+                    <div style="font-size: 12px; color: #666;" data-i18n="featureOneDesc">GPT, Claude, DeepSeek等</div>
+                </div>
+                <div style="flex: 1; min-width: 120px; max-width: 150px; text-align: center;">
+                    <div style="font-size: 28px; margin-bottom: 8px;">💸</div>
+                    <div style="font-weight: 600; font-size: 14px; color: #333;" data-i18n="featureTwoTitle">成本直降</div>
+                    <div style="font-size: 12px; color: #666;" data-i18n="featureTwoDesc">最低至官方1/10</div>
+                </div>
+                <div style="flex: 1; min-width: 120px; max-width: 150px; text-align: center;">
+                    <div style="font-size: 28px; margin-bottom: 8px;">⚡</div>
+                    <div style="font-weight: 600; font-size: 14px; color: #333;" data-i18n="featureThreeTitle">无需特殊网络</div>
+                    <div style="font-size: 12px; color: #666;" data-i18n="featureThreeDesc">国内网络直接访问</div>
+                </div>
+                <div style="flex: 1; min-width: 120px; max-width: 150px; text-align: center;">
+                    <div style="font-size: 28px; margin-bottom: 8px;">🎁</div>
+                    <div style="font-weight: 600; font-size: 14px; color: #333;" data-i18n="featureFourTitle">新用户福利</div>
+                    <div style="font-size: 12px; color: #666;" data-i18n="featureFourDesc">注册即送体验金</div>
+                </div>
+            </div>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
         </div>
-        
-        <button id="submitBtn" onclick="redeem()">立即兑换</button>
-        
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>正在处理...</p>
+
+        <div class="lang-switch">
+            <button id="btnZh" onclick="switchLanguage('zh')">中文</button>
+            <button id="btnEn" onclick="switchLanguage('en')">English</button>
         </div>
-        
-        <div id="result" class="result"></div>
-        
-        <div class="admin-link">
-            <a href="/admin">管理员入口</a>
+
+        <p class="subtitle" data-i18n="siteSubtitle">Choose a plan or redeem your license key</p>
+
+        <div class="section">
+            <div class="section-title" data-i18n="sectionPlans">📦 Choose a Plan</div>
+            <div class="plans">
+                <div class="plan-card" onclick="selectPlan('starter')">
+                    <div class="plan-name" data-i18n="planStarterName">⚡ Dev Starter</div>
+                    <div class="plan-quota" data-i18n="planStarterQuota">7.5M Tokens</div>
+                    <div class="plan-price" data-i18n="planStarterPrice">$1.50</div>
+                    <div class="plan-desc" data-i18n="planStarterDesc">For individual developers</div>
+                </div>
+                <div class="plan-card" onclick="selectPlan('pro')">
+                    <div class="plan-name" data-i18n="planProName">🔥 Pro Plus</div>
+                    <div class="plan-quota" data-i18n="planProQuota">20M Tokens</div>
+                    <div class="plan-price" data-i18n="planProPrice">$3.80</div>
+                    <div class="plan-desc" data-i18n="planProDesc">For heavy development & testing</div>
+                </div>
+                <div class="plan-card" onclick="selectPlan('family')">
+                    <div class="plan-name" data-i18n="planFamilyName">🎒 AI Family Pack</div>
+                    <div class="plan-quota" data-i18n="planFamilyQuota">5M Tokens</div>
+                    <div class="plan-price" data-i18n="planFamilyPrice">$1.20</div>
+                    <div class="plan-desc" data-i18n="planFamilyDesc">Multi-model combo</div>
+                </div>
+            </div>
+            <button class="btn btn-buy" onclick="buyPlan()" style="margin-top: 20px; width: 100%;" data-i18n="btnBuy">💳 Buy Now</button>
+        </div>
+
+        <div class="section">
+            <div class="section-title" data-i18n="sectionRedeem">🔑 Redeem License</div>
+            <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-i18n="redeemHint">Enter the license key you received after purchase to get your API token</p>
+            <div class="redeem-box">
+                <input type="text" id="licenseKey" data-i18n-placeholder="inputPlaceholder" placeholder="Enter 16-digit license key, e.g. ZFUXC4F8OOCI">
+                <button class="btn" onclick="redeemKey()" data-i18n="btnRedeem">Redeem Now</button>
+            </div>
+        </div>
+
+        <div id="resultBox" class="result-box"></div>
+
+        <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+            <a href="/api-docs.html" style="color: #007bff; text-decoration: none; font-weight: 600; font-size: 14px;">📖 API 调用文档</a>
         </div>
     </div>
-    
+
     <script>
-        async function redeem() {
-            const licenseKey = document.getElementById('licenseKey').value.trim();
-            const submitBtn = document.getElementById('submitBtn');
-            const loading = document.getElementById('loading');
-            const result = document.getElementById('result');
-            
-            if (!licenseKey) {
-                result.className = 'result error';
-                result.textContent = '请输入授权码';
-                result.style.display = 'block';
+        let selectedPlan = null;
+        let currentLang = localStorage.getItem('lang') || 'zh';
+
+        function selectPlan(planId) {
+            selectedPlan = planId;
+            document.querySelectorAll('.plan-card').forEach(card => card.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+
+        function buyPlan() {
+            if (!selectedPlan) {
+                alert(translations[currentLang]?.alertSelectPlan || '请先选择一个套餐');
                 return;
             }
-            
-            submitBtn.style.display = 'none';
-            loading.style.display = 'block';
-            result.style.display = 'none';
-            
+            let paymentUrl;
+            if (currentLang === 'en') {
+                paymentUrl = 'https://www.idatariver.com/zh-cn/project/one-key.-all-models.-zero-hassle.-c41a';
+            } else {
+                paymentUrl = 'https://www.idatariver.com/zh-cn/project/%E8%BF%9E%E6%8E%A5%E5%85%A8%E7%90%83%E9%A1%B6%E7%BA%A7-ai-%E6%A8%A1%E5%9E%8B-8495';
+            }
+            window.location.href = paymentUrl;
+        }
+
+        async function redeemKey() {
+            const licenseKey = document.getElementById('licenseKey').value.trim();
+            const resultBox = document.getElementById('resultBox');
+            if (!licenseKey) { 
+                alert(translations[currentLang]?.alertEnterCode || '请输入授权码'); 
+                return; 
+            }
+            resultBox.style.display = 'block';
+            resultBox.className = 'result-box';
+            resultBox.innerHTML = `<span class="loading"></span> ${translations[currentLang]?.verifying || '正在验证并生成令牌...'}`;
             try {
-                const res = await fetch('/redeem', {
+                const response = await fetch('/redeem', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ licenseKey })
                 });
-                
-                const data = await res.json();
-                
-                if (data.success) {
-                    result.className = 'result success';
-                    result.innerHTML = `
-                        <h3>🎉 兑换成功！</h3>
-                        <p style="margin:10px 0;">获得额度: <strong>${(data.quota / 10000).toFixed(0)} 万</strong></p>
-                        <p>API Key:</p>
-                        <div class="api-key-box">${data.apiKey}</div>
-                        <button class="copy-btn" onclick="copyKey('${data.apiKey}')">📋 复制 API Key</button>
-                        <div class="instructions">
-                            <strong>使用方法：</strong>
-                            <code>base_url: "${data.apiUrl}/v1"</code>
-                            <code>api_key: "${data.apiKey}"</code>
-                        </div>
+                const data = await response.json();
+                if (response.ok) {
+                    resultBox.className = 'result-box success';
+                    resultBox.innerHTML = `
+                        <div class="label">${translations[currentLang]?.resultSuccessTitle || '✅ 兑换成功！'}</div>
+                        <p><strong>${translations[currentLang]?.labelApiKey || '你的API令牌：'}</strong><br><span style="color:#007bff; font-size:18px;">${data.apiKey}</span></p>
+                        <p style="margin-top:10px; color:#155724; font-weight:600;">${translations[currentLang]?.resultSuccessMsg || '⚡ 请立刻复制并妥善保管，此令牌仅显示一次！'}</p>
                     `;
-                    document.getElementById('licenseKey').value = '';
                 } else {
-                    result.className = 'result error';
-                    result.textContent = '❌ ' + data.message;
+                    resultBox.className = 'result-box error';
+                    resultBox.innerHTML = `<div class="label">${translations[currentLang]?.resultErrorTitle || '❌ 兑换失败'}</div><p>${data.message}</p>`;
                 }
-            } catch (err) {
-                result.className = 'result error';
-                result.textContent = '❌ 网络错误，请稍后重试';
-            } finally {
-                submitBtn.style.display = 'block';
-                loading.style.display = 'none';
+            } catch (error) {
+                resultBox.className = 'result-box error';
+                resultBox.innerHTML = `<div class="label">${translations[currentLang]?.resultErrorTitle || '❌ 网络错误'}</div><p>${translations[currentLang]?.resultNetworkError || '请检查网络连接后重试'}</p>`;
             }
         }
-        
-        function copyKey(key) {
-            navigator.clipboard.writeText(key);
-            alert('API Key 已复制！');
+
+        function applyLanguage(lang) {
+            if (!translations[lang]) return;
+            currentLang = lang;
+            localStorage.setItem('lang', lang);
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (translations[lang][key]) {
+                    el.setAttribute('placeholder', translations[lang][key]);
+                }
+            });
+            document.title = translations[lang].pageTitle || 'API Token Shop';
+            document.getElementById('btnZh').classList.toggle('active', lang === 'zh');
+            document.getElementById('btnEn').classList.toggle('active', lang === 'en');
         }
+
+        function switchLanguage(lang) {
+            applyLanguage(lang);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            applyLanguage(currentLang);
+        });
+    </script>
+</body>
+</html>
     </script>
 </body>
 </html>
