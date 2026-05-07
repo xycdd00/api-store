@@ -20,10 +20,11 @@ app.post('/redeem', async (req, res) => {
     }
 
     try {
-        // 1. 验证授权码
+        // 1. 验证授权码 (使用标准 Bearer Token)
         console.log(`正在验证授权码: ${licenseKey}`);
-        const verifyRes = await axios.get('https://api.idatariver.com/mapi/license/query', {
-            params: { code: licenseKey, product_id: IDATARIVER_PRODUCT_ID, secret: IDATARIVER_API_KEY }
+        const verifyRes = await axios.get(`https://api.idatariver.com/mapi/license/query`, {
+            params: { code: licenseKey, product_id: IDATARIVER_PRODUCT_ID },
+            headers: { 'Authorization': `Bearer ${IDATARIVER_API_KEY}` }
         });
 
         const licenseData = verifyRes.data;
@@ -52,10 +53,9 @@ app.post('/redeem', async (req, res) => {
             }
         });
 
-        // 4. 更稳健地获取令牌，兼容多种返回格式
+        // 4. 解析令牌
         let newToken = null;
         const responseData = tokenRes.data;
-
         if (responseData.data && responseData.data.key) {
             newToken = responseData.data.key;
         } else if (responseData.key) {
@@ -71,18 +71,19 @@ app.post('/redeem', async (req, res) => {
 
         console.log(`API令牌生成成功: ${newToken.substring(0, 10)}...`);
 
-        // 5. 激活授权码
+        // 5. 激活授权码 (使用标准 Bearer Token)
         try {
-           await axios.post('https://api.idatariver.com/mapi/license/activate', null, {
-    params: { code: licenseKey, product_id: IDATARIVER_PRODUCT_ID },
-    headers: { 'Authorization': `Bearer ${IDATARIVER_API_KEY}` }
-});
+            await axios.post(`https://api.idatariver.com/mapi/license/activate`, {
+                code: licenseKey,
+                product_id: IDATARIVER_PRODUCT_ID
+            }, {
+                headers: { 'Authorization': `Bearer ${IDATARIVER_API_KEY}` }
+            });
             console.log('授权码已激活');
         } catch (activateError) {
             console.error('激活授权码失败:', activateError.response?.data || activateError.message);
         }
 
-        // 6. 返回令牌给用户
         res.json({ success: true, message: '兑换成功！', apiKey: newToken });
 
     } catch (error) {
