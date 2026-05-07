@@ -73,9 +73,10 @@ app.post('/redeem', async (req, res) => {
 
         // 5. 激活授权码
         try {
-            await axios.post('https://api.idatariver.com/mapi/license/activate', null, {
-                params: { code: licenseKey, product_id: IDATARIVER_PRODUCT_ID, secret: IDATARIVER_API_KEY }
-            });
+           await axios.post('https://api.idatariver.com/mapi/license/activate', null, {
+    params: { code: licenseKey, product_id: IDATARIVER_PRODUCT_ID },
+    headers: { 'Authorization': `Bearer ${IDATARIVER_API_KEY}` }
+});
             console.log('授权码已激活');
         } catch (activateError) {
             console.error('激活授权码失败:', activateError.response?.data || activateError.message);
