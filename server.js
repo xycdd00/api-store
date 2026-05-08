@@ -55,18 +55,19 @@ app.post('/redeem', async (req, res) => {
 
         console.log('创建用户:', email);
 
-        // 创建 New API 用户
-        const createUserRes = await axios.post(`${NEWAPI_BASE_URL}/api/user/`, {
-            email: email,
-            password: password,
-            name: `用户_${licenseKey.substring(0, 8)}`,
-            balance: quota
-        }, {
-            headers: {
-                'Authorization': `Bearer ${NEWAPI_ADMIN_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        });
+       // 创建 New API 用户
+const createUserRes = await axios.post(`${NEWAPI_BASE_URL}/api/user/`, {
+    email: email,
+    password: password,
+    name: `用户_${licenseKey.substring(0, 8)}`,
+    balance: quota
+}, {
+    headers: {
+        'Authorization': `Bearer ${NEWAPI_ADMIN_KEY}`,
+        'Content-Type': 'application/json',
+        'New-Api-User': '1'
+    }
+});
 
         console.log('创建用户响应:', JSON.stringify(createUserRes.data));
 
