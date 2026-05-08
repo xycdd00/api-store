@@ -142,40 +142,60 @@
             window.location.href = paymentUrl;
         }
 
-        async function redeemKey() {
-            const licenseKey = document.getElementById('licenseKey').value.trim();
-            const resultBox = document.getElementById('resultBox');
-            if (!licenseKey) { 
-                alert(translations[currentLang]?.alertEnterCode || '请输入授权码'); 
-                return; 
-            }
-            resultBox.style.display = 'block';
-            resultBox.className = 'result-box';
-            resultBox.innerHTML = `<span class="loading"></span> ${translations[currentLang]?.verifying || '正在验证并生成令牌...'}`;
-            try {
-                const response = await fetch('/redeem', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ licenseKey })
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    resultBox.className = 'result-box success';
-                    resultBox.innerHTML = `
-                        <div class="label">${translations[currentLang]?.resultSuccessTitle || '✅ 兑换成功！'}</div>
-                        <p><strong>${translations[currentLang]?.labelApiKey || '你的API令牌：'}</strong><br><span style="color:#007bff; font-size:18px;">${data.apiKey}</span></p>
-                        <p style="margin-top:10px; color:#155724; font-weight:600;">${translations[currentLang]?.resultSuccessMsg || '⚡ 请立刻复制并妥善保管，此令牌仅显示一次！'}</p>
-                    `;
-                } else {
-                    resultBox.className = 'result-box error';
-                    resultBox.innerHTML = `<div class="label">${translations[currentLang]?.resultErrorTitle || '❌ 兑换失败'}</div><p>${data.message}</p>`;
-                }
-            } catch (error) {
-                resultBox.className = 'result-box error';
-                resultBox.innerHTML = `<div class="label">${translations[currentLang]?.resultErrorTitle || '❌ 网络错误'}</div><p>${translations[currentLang]?.resultNetworkError || '请检查网络连接后重试'}</p>`;
-            }
+       async function redeemKey() {
+    const licenseKey = document.getElementById('licenseKey').value.trim();
+    const resultBox = document.getElementById('resultBox');
+    if (!licenseKey) { 
+        alert(translations[currentLang]?.alertEnterCode || '请输入授权码'); 
+        return; 
+    }
+    resultBox.style.display = 'block';
+    resultBox.className = 'result-box';
+    resultBox.innerHTML = `<span class="loading"></span> ${translations[currentLang]?.verifying || '正在验证并生成令牌...'}`;
+    try {
+        const response = await fetch('/redeem', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ licenseKey })
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+            resultBox.className = 'result-box success';
+            resultBox.innerHTML = `
+                <div class="label">✅ ${translations[currentLang]?.resultSuccessTitle || '兑换成功！'}</div>
+                <p style="margin-top:10px;"><strong>${translations[currentLang]?.labelQuota || '获得额度：'}</strong>${(data.quota || 0).toLocaleString()} tokens</p>
+                <p style="margin-top:10px;"><strong>${translations[currentLang]?.labelApiKey || '你的API令牌：'}</strong></p>
+                <div style="background:#f8f9fa;padding:10px;border-radius:8px;margin-top:8px;font-family:monospace;word-break:break-all;font-size:13px;">
+                    ${data.apiKey}
+                </div>
+                <button onclick="copyKey('${data.apiKey}')" style="margin-top:10px;padding:10px 20px;background:#007bff;color:white;border:none;border-radius:6px;cursor:pointer;width:100%;">
+                    📋 复制 API Key
+                </button>
+                <p style="margin-top:15px;padding:10px;background:#fff3cd;border-radius:8px;font-size:13px;">
+                    <strong>使用方法：</strong><br>
+                    <code style="display:block;margin-top:5px;background:#ffeeba;padding:5px;border-radius:4px;">
+                        base_url: "${data.apiUrl || ''}/v1"<br>
+                        api_key: "${data.apiKey}"
+                    </code>
+                </p>
+            `;
+            document.getElementById('licenseKey').value = '';
+        } else {
+            resultBox.className = 'result-box error';
+            resultBox.innerHTML = `<div class="label">❌ ${translations[currentLang]?.resultErrorTitle || '兑换失败'}</div><p>${data.message || '未知错误'}</p>`;
         }
+    } catch (error) {
+        resultBox.className = 'result-box error';
+        resultBox.innerHTML = `<div class="label">❌ ${translations[currentLang]?.resultErrorTitle || '网络错误'}</div><p>${translations[currentLang]?.resultNetworkError || '请检查网络连接后重试'}</p>`;
+    }
+}
 
+// 添加复制函数
+function copyKey(key) {
+    navigator.clipboard.writeText(key).then(() => {
+        alert('API Key 已复制！');
+    });
+}
         function applyLanguage(lang) {
             if (!translations[lang]) return;
             currentLang = lang;
