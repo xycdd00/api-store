@@ -39,21 +39,20 @@ app.post('/redeem', async (req, res) => {
         let quota = 1000000;
         try { if (item.states) quota = JSON.parse(item.states).quota || quota; } catch (e) {}
 
-        // 3. 调用 New API 创建令牌
-        console.log('创建 New API Token，额度:', quota);
-        
-        const tokenRes = await axios.post(`${NEWAPI_BASE_URL}/api/token/`, {
-            name: `购买-${licenseKey.substring(0, 8)}`,
-            remain_quota: quota,
-            unlimited_quota: false
-        }, {
-            headers: {
-                'Authorization': `Bearer ${NEWAPI_ADMIN_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        });
+       // 3. 调用 New API 创建令牌
+console.log('创建 New API Token，额度:', quota);
 
-        console.log('New API 完整响应:', JSON.stringify(tokenRes.data));
+const tokenRes = await axios.post(`${NEWAPI_BASE_URL}/api/token/`, {
+    name: `购买-${licenseKey.substring(0, 8)}`,
+    remain_quota: quota,
+    unlimited_quota: false
+}, {
+    headers: {
+        'Authorization': `Bearer ${NEWAPI_ADMIN_KEY}`,
+        'Content-Type': 'application/json',
+        'New-Api-User': NEWAPI_USER_ID || '1'  // 添加这个！
+    }
+});
 
         // 4. 提取 Token - 尝试多种可能
         let newToken = null;
