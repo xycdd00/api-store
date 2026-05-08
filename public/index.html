@@ -146,12 +146,13 @@
     const licenseKey = document.getElementById('licenseKey').value.trim();
     const resultBox = document.getElementById('resultBox');
     if (!licenseKey) { 
-        alert(translations[currentLang]?.alertEnterCode || '请输入授权码'); 
+        alert('请输入授权码'); 
         return; 
     }
     resultBox.style.display = 'block';
     resultBox.className = 'result-box';
-    resultBox.innerHTML = `<span class="loading"></span> ${translations[currentLang]?.verifying || '正在验证并生成令牌...'}`;
+    resultBox.innerHTML = `<span class="loading"></span> 正在验证并创建账号...`;
+    
     try {
         const response = await fetch('/redeem', {
             method: 'POST',
@@ -159,35 +160,84 @@
             body: JSON.stringify({ licenseKey })
         });
         const data = await response.json();
-        if (response.ok && data.success) {
+        
+        if (data.success) {
             resultBox.className = 'result-box success';
-            resultBox.innerHTML = `
-                <div class="label">✅ ${translations[currentLang]?.resultSuccessTitle || '兑换成功！'}</div>
-                <p style="margin-top:10px;"><strong>${translations[currentLang]?.labelQuota || '获得额度：'}</strong>${(data.quota || 0).toLocaleString()} tokens</p>
-                <p style="margin-top:10px;"><strong>${translations[currentLang]?.labelApiKey || '你的API令牌：'}</strong></p>
-                <div style="background:#f8f9fa;padding:10px;border-radius:8px;margin-top:8px;font-family:monospace;word-break:break-all;font-size:13px;">
-                    ${data.apiKey}
+            
+            let content = `
+                <div class="label">✅ 兑换成功！</div>
+                <div style="margin-top:15px;padding:15px;background:#e3f2fd;border-radius:10px;">
+                    <h4 style="color:#1976d2;">🎁 获得额度：${(data.quota/10000).toFixed(0)}万 Tokens</h4>
                 </div>
-                <button onclick="copyKey('${data.apiKey}')" style="margin-top:10px;padding:10px 20px;background:#007bff;color:white;border:none;border-radius:6px;cursor:pointer;width:100%;">
-                    📋 复制 API Key
-                </button>
-                <p style="margin-top:15px;padding:10px;background:#fff3cd;border-radius:8px;font-size:13px;">
-                    <strong>使用方法：</strong><br>
-                    <code style="display:block;margin-top:5px;background:#ffeeba;padding:5px;border-radius:4px;">
-                        base_url: "${data.apiUrl || ''}/v1"<br>
-                        api_key: "${data.apiKey}"
-                    </code>
-                </p>
             `;
+            
+            // 如果有 API Key，直接显示
+            if (data.apiKey) {
+                content += `
+                    <div style="margin-top:15px;padding:15px;background:#f8f9fa;border-radius:10px;">
+                        <h4 style="color:#333;">🔑 你的 API Key：</h4>
+                        <div style="margin-top:10px;padding:10px;background:#fff;border-radius:5px;font-family:monospace;word-break:break-all;font-size:13px;">
+                            ${data.apiKey}
+                        </div>
+                        <button onclick="copyKey('${data.apiKey}')" style="margin-top:10px;padding:10px;background:#007bff;color:white;border:none;border-radius:6px;cursor:pointer;width:100%;">
+                            📋 复制 API Key
+                        </button>
+                    </div>
+                `;
+            }
+            
+            // 显示账号密码
+            content += `
+                <div style="margin-top:15px;padding:15px;background:#fff3cd;border-radius:10px;">
+                    <h4 style="color:#856404;">👤 账号信息：</h4>
+                    <div style="margin-top:10px;">
+                        <p><strong>用户名：</strong></p>
+                        <div style="padding:8px;background:#fff;border-radius:5px;font-family:monospace;">${data.username}</div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <p><strong>密码：</strong></p>
+                        <div style="padding:8px;background:#fff;border-radius:5px;font-family:monospace;">${data.password}</div>
+                    </div>
+                    <button onclick="copyAccount('${data.username}', '${data.password}')" style="margin-top:10px;padding:10px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;width:100%;">
+                        📋 复制账号信息
+                    </button>
+                </div>
+                
+                <div style="margin-top:15px;padding:15px;background:#f0f0f0;border-radius:10px;font-size:13px;">
+                    <p style="color:#333;"><strong>📖 使用方法：</strong></p>
+                    <ol style="margin-top:8px;padding-left:20px;line-height:1.8;color:#666;">
+                        <li>复制上方的账号信息</li>
+                        <li>登录 <a href="${data.loginUrl}" target="_blank">${data.loginUrl}</a></li>
+                        <li>在后台创建你的 API Key</li>
+                        <li>使用你的 API Key 调用 AI 接口</li>
+                    </ol>
+                </div>
+                
+                <div style="margin-top:15px;padding:10px;background:#ffebee;border-radius:10px;color:#c62828;font-size:13px;">
+                    ⚠️ 请立即复制保存账号信息，此账号仅显示一次！
+                </div>
+            `;
+            
+            resultBox.innerHTML = content;
             document.getElementById('licenseKey').value = '';
         } else {
             resultBox.className = 'result-box error';
-            resultBox.innerHTML = `<div class="label">❌ ${translations[currentLang]?.resultErrorTitle || '兑换失败'}</div><p>${data.message || '未知错误'}</p>`;
+            resultBox.innerHTML = `<div class="label">❌ 兑换失败</div><p>${data.message}</p>`;
         }
     } catch (error) {
         resultBox.className = 'result-box error';
-        resultBox.innerHTML = `<div class="label">❌ ${translations[currentLang]?.resultErrorTitle || '网络错误'}</div><p>${translations[currentLang]?.resultNetworkError || '请检查网络连接后重试'}</p>`;
+        resultBox.innerHTML = `<div class="label">❌ 网络错误</div><p>请检查网络连接后重试</p>`;
     }
+}
+
+function copyKey(key) {
+    navigator.clipboard.writeText(key);
+    alert('API Key 已复制！');
+}
+
+function copyAccount(username, password) {
+    navigator.clipboard.writeText(`用户名: ${username}\n密码: ${password}`);
+    alert('账号信息已复制！');
 }
 
 // 添加复制函数
