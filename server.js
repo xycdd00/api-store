@@ -1,161 +1,123 @@
 const express = require('express');
 const axios = require('axios');
-const path = require('path');
-
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static('public'));
 
-// ============ 配置 ============
-const IDATARIVER_API_KEY = 'sk_8c2853153ddac72b2322dd2bb6244b9a';
-const IDATARIVER_PRODUCT_ID = '69f0f28f5bf6c3d12b2aca72';
-const ONEAPI_BASE_URL = 'https://apistore.zeabur.app';
-const ONEAPI_ADMIN_KEY = 'f5be58e5747f420aad6f3f3160bafe28';
+// ========== 环境变量配置 ==========
+const NEWAPI_BASE_URL = process.env.NEWAPI_BASE_URL;          // 例如 https://你的new-api域名
+const NEWAPI_ADMIN_KEY = process.env.NEWAPI_ADMIN_KEY;        // New API 系统访问令牌
+// ==================================
 
-// ============ 页面 ============
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// 新增：生成兑换码接口
+app.post('/generate-code', async (req, res) => {
+    const { plan } = req.body;   // 前端传过来的套餐标识，如 'starter', 'pro', 'family'
+
+    // 1. 根据套餐设定对应额度（单位：美元，按 New API 的计费逻辑）
+    const quotas = {
+        starter: 0.75,     // 开发者入门：$0.75 额度
+        pro: 2.0,           // 专家进阶：$2.0 额度
+        family: 0.5          // AI全家桶：$0.5 额度
+    };
+    const quota = quotas[plan];
+    if (!quota) {
+        return res.status(400).json({ success: false, message: '无效的套餐' });
+    }
+
+    // 2. 调用 New API 管理接口创建兑换码
+    try {
+        const response = await axios.post(`${NEWAPI_BASE_URL}/api/redemption/`, {
+            name: `套餐兑换码-${plan}`,
+            count: 1,
+            quota: quota,
+            // 兑换码有效期（可选）：设置为 30 天后过期
+            expired_time: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
+        }, {
+            headers: {
+                'Authorization': `Bearer ${NEWAPI_ADMIN_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        // New API 返回的兑换码通常在 data 字段中
+        const redemptionData = response.data;
+        console.log('生成兑换码响应:', JSON.stringify(redemptionData));
+
+        // 尝试多种可能的返回结构
+        let code = null;
+        if (redemptionData.data && redemptionData.data.length > 0) {
+            code = redemptionData.data[0].key;       // 常见的返回格式
+        } else if (redemptionData.key) {
+            code = redemptionData.key;
+        } else if (redemptionData.data && redemptionData.data.key) {
+            code = redemptionData.data.key;
+        }
+
+        if (!code) {
+            console.error('未从New API响应中提取到兑换码，请检查接口返回结构');
+            return res.status(500).json({ success: false, message: '生成兑换码失败，请联系管理员' });
+        }
+
+        res.json({ success: true, code: code, quota: quota, message: '兑换码已生成' });
+    } catch (error) {
+        console.error('生成兑换码出错:', error.response?.data || error.message);
+        res.status(500).json({ success: false, message: '兑换码生成失败，请稍后再试' });
+    }
 });
 
-// ============ 兑换 API ============
-app.post('/redeem', async (req, res) => {
-    const { licenseKey } = req.body;
-    
-    if (!licenseKey) {
-        return res.json({ success: false, message: '请输入授权码' });
+// 保留原来的 /redeem 接口可以删除或保留，但前端已不用
+// 这里为了兼容可以保留，但不再推荐使用
+
+const express = require('express');
+const axios = require('axios');
+const app = express();
+// ... 你的其他配置 (NEWAPI_BASE_URL, NEWAPI_ADMIN_KEY 等)
+
+app.post('/payment-callback', async (req, res) => {
+    console.log('收到iDataRiver支付回调:', JSON.stringify(req.body));
+    const { event, order_id, product_id, user_id } = req.body; // 根据iDataRiver实际回调参数调整
+
+    // 1. 安全检查：只处理订单支付完成的事件
+    if (event !== 'ORDER_COMPLETED') {
+        return res.status(200).send('Event not processed'); // 不是支付成功事件，不处理
     }
-    
+
     try {
-        // 1. 验证 iDataRiver 授权码
-        const verifyRes = await axios.get('https://api.idatariver.com/mapi/license/query', {
-            params: { code: licenseKey, product_id: IDATARIVER_PRODUCT_ID },
-            headers: { 'Authorization': `Bearer ${IDATARIVER_API_KEY}` }
+        // 2. 查询iDataRiver订单详情，获取业务参数(quota)
+        //    你需要使用iDataRiver的商户API Key来查询订单，此处为伪代码示意
+        const orderDetails = await getIdataRiverOrderDetails(order_id, product_id); 
+        const quota = orderDetails.quota; // 从iDataRiver商品业务参数中获取额度
+
+        // 3. 调用你的New API接口生成兑换码
+        const newApiResponse = await axios.post(`${process.env.NEWAPI_BASE_URL}/api/redemption/`, {
+            name: `自动生成-订单${order_id}`,
+            count: 1,
+            quota: quota, 
+            expired_time: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60 // 30天有效期
+        }, {
+            headers: { 'Authorization': `Bearer ${process.env.NEWAPI_ADMIN_KEY}` }
         });
-        
-        const item = verifyRes.data.result?.items?.[0];
-        if (!item || item.status !== 'VALID') {
-            return res.json({ success: false, message: '授权码无效或已被使用' });
-        }
-        
-        // 2. 获取额度
-        let quota = 1000000;
-        try {
-            if (item.states) {
-                quota = JSON.parse(item.states).quota || quota;
-            }
-        } catch (e) {}
-        
-        // 3. 创建 One API 用户 - 尝试不同格式
-        const randomNum = Math.random().toString(36).substring(2, 10);
-        const email = `user_${licenseKey.substring(0, 8)}_${randomNum}@example.com`;
-        const password = randomNum + Math.random().toString(36).substring(2, 6).toUpperCase();
-        
-        console.log('创建 One API 用户:', email, password);
-        
-        let userId = null;
-        
-        // 尝试方式1: 标准参数
-        try {
-            const userRes = await axios.post(`${ONEAPI_BASE_URL}/api/user`, {
-                email: email,
-                password: password,
-                name: `用户_${licenseKey.substring(0, 8)}`,
-                balance: quota
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${ONEAPI_ADMIN_KEY}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            console.log('方式1响应:', JSON.stringify(userRes.data));
-            userId = userRes.data?.id;
-        } catch (e1) {
-            console.log('方式1失败:', e1.message);
-            
-            // 尝试方式2: 只用 username
-            try {
-                const userRes2 = await axios.post(`${ONEAPI_BASE_URL}/api/user`, {
-                    username: email,
-                    password: password,
-                    display_name: `用户_${licenseKey.substring(0, 8)}`,
-                    quota: quota
-                }, {
-                    headers: {
-                        'Authorization': `Bearer ${ONEAPI_ADMIN_KEY}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                console.log('方式2响应:', JSON.stringify(userRes2.data));
-                userId = userRes2.data?.id;
-            } catch (e2) {
-                console.log('方式2失败:', e2.message);
-                
-                // 尝试方式3: 简化参数
-                try {
-                    const userRes3 = await axios.post(`${ONEAPI_BASE_URL}/api/user`, {
-                        email: email,
-                        password: password
-                    }, {
-                        headers: {
-                            'Authorization': `Bearer ${ONEAPI_ADMIN_KEY}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    console.log('方式3响应:', JSON.stringify(userRes3.data));
-                    userId = userRes3.data?.id || userRes3.data?.data?.id;
-                } catch (e3) {
-                    console.log('方式3失败:', e3.message);
-                }
-            }
-        }
-        
-        if (userId) {
-            console.log('创建用户成功，用户ID:', userId);
-            
-            // 给用户充值额度
-            try {
-                await axios.put(`${ONEAPI_BASE_URL}/api/user/${userId}`, {
-                    balance: quota
-                }, {
-                    headers: {
-                        'Authorization': `Bearer ${ONEAPI_ADMIN_KEY}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-            } catch (e) {
-                console.log('充值额度失败:', e.message);
-            }
-        }
-        
-        // 4. 返回结果
-        if (userId) {
-            res.json({
-                success: true,
-                message: '兑换成功！',
-                quota: quota,
-                username: email,
-                password: password,
-                loginUrl: ONEAPI_BASE_URL,
-                instructions: '请登录后创建 API Key 使用'
-            });
-        } else {
-            res.json({
-                success: false,
-                message: '创建用户失败，请联系管理员'
-            });
-        }
-        
+
+        const redemptionCode = newApiResponse.data.data[0].key;
+        console.log(`订单 ${order_id} 支付成功，生成兑换码: ${redemptionCode}`);
+
+        // 4. 将兑换码发货给用户 (通过邮件、站内信或iDataRiver订单备注等)
+        //    例如，你可以将兑换码更新到iDataRiver的订单备注中
+        await addOrderNoteToIdataRiver(order_id, redemptionCode);
+
     } catch (error) {
-        console.error('兑换失败:', error.response?.data || error.message);
-        res.json({ 
-            success: false, 
-            message: '兑换失败: ' + (error.response?.data?.message || error.message)
-        });
+        console.error('处理支付回调出错:', error.response?.data || error.message);
     }
+
+    // 重要：向iDataRiver返回成功状态，否则它会重复通知
+    res.status(200).json({ code: 0, message: 'Webhook processed successfully' });
 });
 
 app.listen(port, () => {
-    console.log(`兑换系统运行中`);
+    console.log(`API商店运行在 http://localhost:${port}`);
+    console.log('环境变量状态:');
+    console.log('- NEWAPI_BASE_URL:', NEWAPI_BASE_URL ? '✅' : '❌');
+    console.log('- NEWAPI_ADMIN_KEY:', NEWAPI_ADMIN_KEY ? '✅' : '❌');
 });

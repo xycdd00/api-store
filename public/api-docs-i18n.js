@@ -46,7 +46,14 @@ const docTranslations = {
     contactTitle: "📬 Contact & Support",
     contactDesc: 'Website: <a href="/">Your Website</a>',
     tipText: "💡 Your token quota is universal — use it across all models without buying separate plans.",
-    backHome: "⬅ Back to Shop"
+    backHome: "⬅ Back to Shop",
+    generating: "Generating redemption code...",
+codeSuccess: "✅ Redemption code generated!",
+labelCode: "Redemption code:",
+codeHint: "⚡ Please copy the code and go to New API platform to redeem.",
+generateFailed: "Generation failed",
+networkError: "Network error",
+tryAgain: "Please try again later."
   },
   zh: {
     pageTitle: "API 调用指南 - API令牌商店",
@@ -95,6 +102,13 @@ const docTranslations = {
     contactTitle: "📬 联系与支持",
     contactDesc: '网站：<a href="/">你的网站</a>',
     tipText: "💡 你的令牌额度是通用的，可以在所有模型上自由使用，无需为每个模型单独购买。",
+generating: "正在生成兑换码...",
+codeSuccess: "✅ 兑换码已生成！",
+labelCode: "兑换码：",
+codeHint: "⚡ 请复制兑换码，前往 New API 平台充值使用。",
+generateFailed: "生成失败",
+networkError: "网络错误",
+tryAgain: "请稍后重试",
     backHome: "⬅ 返回商店"
   }
 };

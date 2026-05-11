@@ -23,13 +23,10 @@
         .plan-quota { font-size: 24px; color: #007bff; font-weight: bold; margin-bottom: 8px; }
         .plan-price { font-size: 20px; color: #ff6b00; font-weight: bold; }
         .plan-desc { font-size: 12px; color: #666; margin-top: 5px; }
-        .redeem-box { display: flex; gap: 12px; margin-top: 20px; }
-        input { flex: 1; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; outline: none; transition: border 0.2s; }
-        input:focus { border-color: #007bff; }
-        .btn { flex: 1; padding: 14px 24px; background: #007bff; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn { padding: 14px 24px; background: #007bff; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; width: 100%; }
         .btn:hover { background: #0056b3; }
         .btn:disabled { background: #ccc; cursor: not-allowed; }
-        .btn-buy { background: #28a745; }
+        .btn-buy { background: #28a745; margin-top: 20px; }
         .btn-buy:hover { background: #1e7e34; }
         .result-box { margin-top: 20px; padding: 20px; border-radius: 10px; display: none; word-break: break-all; }
         .result-box.success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
@@ -77,40 +74,33 @@
 
         <p class="subtitle" data-i18n="siteSubtitle">Choose a plan or redeem your license key</p>
 
+        <!-- 套餐选择区 -->
         <div class="section">
             <div class="section-title" data-i18n="sectionPlans">📦 Choose a Plan</div>
             <div class="plans">
                 <div class="plan-card" onclick="selectPlan('starter')">
                     <div class="plan-name" data-i18n="planStarterName">⚡ Dev Starter</div>
                     <div class="plan-quota" data-i18n="planStarterQuota">7.5M Tokens</div>
-                    <div class="plan-price" data-i18n="planStarterPrice">$1.50</div>
+                    <div class="plan-price" data-i18n="planStarterPrice">$0.75</div>
                     <div class="plan-desc" data-i18n="planStarterDesc">For individual developers</div>
                 </div>
                 <div class="plan-card" onclick="selectPlan('pro')">
                     <div class="plan-name" data-i18n="planProName">🔥 Pro Plus</div>
                     <div class="plan-quota" data-i18n="planProQuota">20M Tokens</div>
-                    <div class="plan-price" data-i18n="planProPrice">$3.80</div>
+                    <div class="plan-price" data-i18n="planProPrice">$2.00</div>
                     <div class="plan-desc" data-i18n="planProDesc">For heavy development & testing</div>
                 </div>
                 <div class="plan-card" onclick="selectPlan('family')">
                     <div class="plan-name" data-i18n="planFamilyName">🎒 AI Family Pack</div>
                     <div class="plan-quota" data-i18n="planFamilyQuota">5M Tokens</div>
-                    <div class="plan-price" data-i18n="planFamilyPrice">$1.20</div>
+                    <div class="plan-price" data-i18n="planFamilyPrice">$0.50</div>
                     <div class="plan-desc" data-i18n="planFamilyDesc">Multi-model combo</div>
                 </div>
             </div>
-            <button class="btn btn-buy" onclick="buyPlan()" style="margin-top: 20px; width: 100%;" data-i18n="btnBuy">💳 Buy Now</button>
+            <button class="btn btn-buy" onclick="buyPlan()" data-i18n="btnBuy">💳 立即生成兑换码</button>
         </div>
 
-        <div class="section">
-            <div class="section-title" data-i18n="sectionRedeem">🔑 Redeem License</div>
-            <p style="color: #666; font-size: 14px; margin-bottom: 15px;" data-i18n="redeemHint">Enter the license key you received after purchase to get your API token</p>
-            <div class="redeem-box">
-                <input type="text" id="licenseKey" data-i18n-placeholder="inputPlaceholder" placeholder="Enter 16-digit license key, e.g. ZFUXC4F8OOCI">
-                <button class="btn" onclick="redeemKey()" data-i18n="btnRedeem">Redeem Now</button>
-            </div>
-        </div>
-
+        <!-- 结果展示区 -->
         <div id="resultBox" class="result-box"></div>
 
         <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
@@ -128,153 +118,58 @@
             event.currentTarget.classList.add('selected');
         }
 
-        function buyPlan() {
+        async function buyPlan() {
             if (!selectedPlan) {
                 alert(translations[currentLang]?.alertSelectPlan || '请先选择一个套餐');
                 return;
             }
-            let paymentUrl;
-            if (currentLang === 'en') {
-                paymentUrl = 'https://www.idatariver.com/zh-cn/project/one-key.-all-models.-zero-hassle.-c41a';
-            } else {
-                paymentUrl = 'https://www.idatariver.com/zh-cn/project/%E8%BF%9E%E6%8E%A5%E5%85%A8%E7%90%83%E9%A1%B6%E7%BA%A7-ai-%E6%A8%A1%E5%9E%8B-8495';
+
+            const resultBox = document.getElementById('resultBox');
+            resultBox.style.display = 'block';
+            resultBox.className = 'result-box';
+            resultBox.innerHTML = `<span class="loading"></span> ${translations[currentLang]?.generating || '正在生成兑换码...'}`;
+
+            try {
+                const response = await fetch('/generate-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan: selectedPlan })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultBox.className = 'result-box success';
+                    resultBox.innerHTML = `
+                        <div class="label">${translations[currentLang]?.codeSuccess || '✅ 兑换码已生成！'}</div>
+                        <p><strong>${translations[currentLang]?.labelCode || '兑换码：'}</strong><br><span style="color:#007bff; font-size:18px;">${data.code}</span></p>
+                        <p style="margin-top:10px; color:#155724; font-weight:600;">${translations[currentLang]?.codeHint || '⚡ 请复制兑换码，前往 New API 平台充值使用。'}</p>
+                    `;
+                } else {
+                    resultBox.className = 'result-box error';
+                    resultBox.innerHTML = `<div class="label">❌ ${translations[currentLang]?.generateFailed || '生成失败'}</div><p>${data.message}</p>`;
+                }
+            } catch (error) {
+                resultBox.className = 'result-box error';
+                resultBox.innerHTML = `<div class="label">❌ ${translations[currentLang]?.networkError || '网络错误'}</div><p>${translations[currentLang]?.tryAgain || '请稍后重试'}</p>`;
             }
-            window.location.href = paymentUrl;
         }
 
-       async function redeemKey() {
-    const licenseKey = document.getElementById('licenseKey').value.trim();
-    const resultBox = document.getElementById('resultBox');
-    if (!licenseKey) { 
-        alert('请输入授权码'); 
-        return; 
-    }
-    resultBox.style.display = 'block';
-    resultBox.className = 'result-box';
-    resultBox.innerHTML = `<span class="loading"></span> 正在验证并创建账号...`;
-    
-    try {
-        const response = await fetch('/redeem', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ licenseKey })
-        });
-        const data = await response.json();
-        
-        if (data.success) {
-            resultBox.className = 'result-box success';
-            
-            let content = `
-                <div class="label">✅ 兑换成功！</div>
-                <div style="margin-top:15px;padding:15px;background:#e3f2fd;border-radius:10px;">
-                    <h4 style="color:#1976d2;">🎁 获得额度：${(data.quota/10000).toFixed(0)}万 Tokens</h4>
-                </div>
-            `;
-            
-            // 如果有 API Key，直接显示
-            if (data.apiKey) {
-                content += `
-                    <div style="margin-top:15px;padding:15px;background:#f8f9fa;border-radius:10px;">
-                        <h4 style="color:#333;">🔑 你的 API Key：</h4>
-                        <div style="margin-top:10px;padding:10px;background:#fff;border-radius:5px;font-family:monospace;word-break:break-all;font-size:13px;">
-                            ${data.apiKey}
-                        </div>
-                        <button onclick="copyKey('${data.apiKey}')" style="margin-top:10px;padding:10px;background:#007bff;color:white;border:none;border-radius:6px;cursor:pointer;width:100%;">
-                            📋 复制 API Key
-                        </button>
-                    </div>
-                `;
-            }
-            
-            // 显示账号密码
-            content += `
-                <div style="margin-top:15px;padding:15px;background:#fff3cd;border-radius:10px;">
-                    <h4 style="color:#856404;">👤 账号信息：</h4>
-                    <div style="margin-top:10px;">
-                        <p><strong>用户名：</strong></p>
-                        <div style="padding:8px;background:#fff;border-radius:5px;font-family:monospace;">${data.username}</div>
-                    </div>
-                    <div style="margin-top:10px;">
-                        <p><strong>密码：</strong></p>
-                        <div style="padding:8px;background:#fff;border-radius:5px;font-family:monospace;">${data.password}</div>
-                    </div>
-                    <button onclick="copyAccount('${data.username}', '${data.password}')" style="margin-top:10px;padding:10px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;width:100%;">
-                        📋 复制账号信息
-                    </button>
-                </div>
-                
-                <div style="margin-top:15px;padding:15px;background:#f0f0f0;border-radius:10px;font-size:13px;">
-                    <p style="color:#333;"><strong>📖 使用方法：</strong></p>
-                    <ol style="margin-top:8px;padding-left:20px;line-height:1.8;color:#666;">
-                        <li>复制上方的账号信息</li>
-                        <li>登录 <a href="${data.loginUrl}" target="_blank">${data.loginUrl}</a></li>
-                        <li>在后台创建你的 API Key</li>
-                        <li>使用你的 API Key 调用 AI 接口</li>
-                    </ol>
-                </div>
-                
-                <div style="margin-top:15px;padding:10px;background:#ffebee;border-radius:10px;color:#c62828;font-size:13px;">
-                    ⚠️ 请立即复制保存账号信息，此账号仅显示一次！
-                </div>
-            `;
-            
-            resultBox.innerHTML = content;
-            document.getElementById('licenseKey').value = '';
-        } else {
-            resultBox.className = 'result-box error';
-            resultBox.innerHTML = `<div class="label">❌ 兑换失败</div><p>${data.message}</p>`;
-        }
-    } catch (error) {
-        resultBox.className = 'result-box error';
-        resultBox.innerHTML = `<div class="label">❌ 网络错误</div><p>请检查网络连接后重试</p>`;
-    }
-}
-
-function copyKey(key) {
-    navigator.clipboard.writeText(key);
-    alert('API Key 已复制！');
-}
-
-function copyAccount(username, password) {
-    navigator.clipboard.writeText(`用户名: ${username}\n密码: ${password}`);
-    alert('账号信息已复制！');
-}
-
-// 添加复制函数
-function copyKey(key) {
-    navigator.clipboard.writeText(key).then(() => {
-        alert('API Key 已复制！');
-    });
-}
+        // 语言切换逻辑（与之前相同，省略部分，但完整文件需包含）
         function applyLanguage(lang) {
             if (!translations[lang]) return;
             currentLang = lang;
             localStorage.setItem('lang', lang);
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (translations[lang][key]) {
-                    el.textContent = translations[lang][key];
-                }
+                if (translations[lang][key]) el.textContent = translations[lang][key];
             });
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                const key = el.getAttribute('data-i18n-placeholder');
-                if (translations[lang][key]) {
-                    el.setAttribute('placeholder', translations[lang][key]);
-                }
-            });
-            document.title = translations[lang].pageTitle || 'API Token Shop';
             document.getElementById('btnZh').classList.toggle('active', lang === 'zh');
             document.getElementById('btnEn').classList.toggle('active', lang === 'en');
         }
 
-        function switchLanguage(lang) {
-            applyLanguage(lang);
-        }
+        function switchLanguage(lang) { applyLanguage(lang); }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            applyLanguage(currentLang);
-        });
+        document.addEventListener('DOMContentLoaded', () => applyLanguage(currentLang));
     </script>
 </body>
 </html>
- 
