@@ -70,7 +70,6 @@ app.post('/generate-code', async (req, res) => {
 // 保留原来的 /redeem 接口可以删除或保留，但前端已不用
 // 这里为了兼容可以保留，但不再推荐使用
 
-const express = require('express');
 const axios = require('axios');
 const app = express();
 // ... 你的其他配置 (NEWAPI_BASE_URL, NEWAPI_ADMIN_KEY 等)
